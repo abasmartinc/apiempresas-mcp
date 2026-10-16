@@ -1,0 +1,48 @@
+{
+  "name": "apiempresas-mcp",
+  "version": "1.1.0",
+  "description": "Servidor MCP oficial de APIEmpresas.es: datos de empresas españolas (CIF, BORME, administradores, KYB, riesgo) para Claude, Cursor y otros asistentes de IA",
+  "mcpName": "io.github.abasmartinc/apiempresas",
+  "type": "module",
+  "bin": {
+    "apiempresas-mcp": "dist/index.js"
+  },
+  "main": "dist/index.js",
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsc",
+    "test": "npm run build && node tests/smoke.mjs",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "apiempresas",
+    "empresas",
+    "cif",
+    "nif",
+    "borme",
+    "registro mercantil",
+    "kyb",
+    "spain",
+    "spanish companies"
+  ],
+  "homepage": "https://apiempresas.es",
+  "author": "APIEmpresas",
+  "license": "MIT",
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.32.1",
+    "zod": "^3.25.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.11.19",
+    "typescript": "^5.3.3"
+  }
+}
