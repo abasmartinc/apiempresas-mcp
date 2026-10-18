@@ -15,7 +15,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
 
-export const VERSION = '1.1.0';
+export const VERSION = '1.2.0';
 
 const API_KEY = (process.env.APIEMPRESAS_API_KEY || '').trim();
 const BASE_URL = (process.env.APIEMPRESAS_BASE_URL || 'https://apiempresas.es/api/v1').replace(/\/+$/, '');
@@ -161,11 +161,7 @@ export function crearServidor(): McpServer {
     {
       title: 'Empresa por CIF',
       description:
-        'Datos de una empresa española a partir de su CIF/NIF: razón social, estado (activa, extinguida, en concurso…), ' +
-        'fecha de constitución, provincia, municipio, CNAE, forma jurídica (con código ISO 20275) y código LEI y, según el ' +
-        'plan, domicilio completo, tramo de facturación, socio único (ownership), matriz del grupo según GLEIF (group) y ' +
-        'administradores (include_directors). Gasta 1 consulta. El estado lo calcula APIEmpresas a partir del BORME; ' +
-        'no es un certificado del Registro Mercantil. Spanish company lookup by tax ID.',
+        "Ficha de UNA empresa española cuando ya tienes su CIF/NIF. Úsala para saber si existe y está activa, su razón social, forma jurídica (con código ISO 20275), código LEI, CNAE, provincia y fecha de constitución; con plan Pro, también domicilio, tramo de facturación, socio único, matriz del grupo y, con include_directors, los administradores vigentes. Si no tienes el CIF, usa search_companies; para decidir un alta (KYB), verify_company. Gasta 1 consulta. Spanish company lookup by tax ID.",
       inputSchema: {
         cif: cifSchema,
         include_directors: z
@@ -184,8 +180,7 @@ export function crearServidor(): McpServer {
     {
       title: 'Buscar empresas por nombre',
       description:
-        'Busca empresas españolas por nombre o razón social y devuelve las coincidencias con su CIF. ' +
-        'Útil cuando no se conoce el CIF. Search Spanish companies by name.',
+        "Busca empresas españolas por nombre o parte del nombre y devuelve las candidatas con su CIF, provincia y estado. Úsala cuando NO tienes el CIF de una empresa concreta; después, get_company con el CIF elegido. Para convertir una lista de muchos nombres en CIF, mejor find_cif_by_name. Search Spanish companies by name.",
       inputSchema: {
         query: z.string().min(2).describe('Nombre o parte del nombre de la empresa'),
         limit: z.number().int().min(1).max(25).optional().describe('Número máximo de resultados (por defecto 10)'),
@@ -200,10 +195,7 @@ export function crearServidor(): McpServer {
     {
       title: 'Verificación KYB',
       description:
-        'Verificación KYB de una empresa en una sola llamada: si existe y está activa, si el nombre declarado coincide ' +
-        'y si una persona es administradora o el socio único, con alertas y una recomendación (pass / review / fail). ' +
-        'Devuelve también la forma jurídica, el LEI, la matriz del grupo y el socio único. ' +
-        'Plan Pro o superior; gasta 2 consultas. KYB check for a Spanish company.',
+        "Verificación para dar de alta a un cliente o proveedor (KYB) en una llamada: comprueba que la sociedad existe y opera, que la razón social que te han dado coincide (name), que quien firma es administrador vigente o socio único (person) y, si se pide, el NIF-IVA en VIES (vat). Devuelve alertas y una recomendación pass / review / fail, además de forma jurídica, LEI, matriz y socio único. Úsala para decidir; para solo consultar datos, get_company. Plan Pro; gasta 2 consultas. KYB check for a Spanish company.",
       inputSchema: {
         cif: cifSchema,
         name: z.string().optional().describe('Razón social que ha declarado el cliente, para comprobar que coincide'),
@@ -221,8 +213,7 @@ export function crearServidor(): McpServer {
     {
       title: 'De nombre a CIF',
       description:
-        'Encuentra el CIF de una lista de empresas a partir de sus nombres (hasta 100). Cada resultado es match, ' +
-        'ambiguous o no_match; solo los match gastan consulta. Plan Pro o superior. Útil para completar hojas de clientes.',
+        "Convierte una LISTA de nombres de empresa (hasta 100) en sus CIF, con resultado match, ambiguous o no_match para cada uno. Úsala para completar hojas de clientes o proveedores que solo tienen el nombre. Solo los match gastan consulta. Para un solo nombre, search_companies. Plan Pro.",
       inputSchema: {
         names: z.array(z.string().min(2)).min(1).max(100).describe('Nombres de empresas'),
         province: z
@@ -244,8 +235,7 @@ export function crearServidor(): McpServer {
     {
       title: 'Historial del BORME',
       description:
-        'Actos publicados en el BORME (Boletín Oficial del Registro Mercantil) de una empresa: constitución, ' +
-        'nombramientos y ceses, ampliaciones de capital, cambios de domicilio, disolución, concurso… Plan Pro o superior.',
+        "Todos los actos publicados en el BORME de una empresa, con fecha y PDF oficial: constitución, nombramientos y ceses, ampliaciones de capital, cambios de domicilio o de nombre, disolución, concurso... Úsala para la historia y los cambios recientes; para el estado actual basta get_company. Plan Pro.",
       inputSchema: { cif: cifSchema },
       annotations: soloLectura,
     },
@@ -257,8 +247,7 @@ export function crearServidor(): McpServer {
     {
       title: 'Perfil de riesgo',
       description:
-        'Perfil de riesgo de una empresa calculado a partir de sus publicaciones en el BORME (concursos, disoluciones, ' +
-        'cierres de hoja, cambios de administradores…), con nivel y explicación. Plan Business.',
+        "Nivel de riesgo de una empresa y sus motivos, calculado a partir de sus publicaciones en el BORME (concursos, disoluciones, cierres de hoja registral, cuentas no depositadas, cambios de administradores...). Úsala antes de dar crédito o firmar con un proveedor. Plan Business.",
       inputSchema: { cif: cifSchema },
       annotations: soloLectura,
     },
@@ -270,7 +259,7 @@ export function crearServidor(): McpServer {
     {
       title: 'Contratos públicos',
       description:
-        'Contratos del sector público adjudicados a una empresa (Plataforma de Contratación del Sector Público). Plan Business.',
+        "Contratos del sector público adjudicados a una empresa (Plataforma de Contratación del Sector Público): organismo, objeto, importe y fecha. Plan Business.",
       inputSchema: {
         cif: cifSchema,
         page: z.number().int().min(1).optional().describe('Página (por defecto 1)'),
@@ -283,10 +272,51 @@ export function crearServidor(): McpServer {
   );
 
   server.registerTool(
+    'search_tenders',
+    {
+      title: 'Licitaciones públicas abiertas',
+      description: "Licitaciones públicas EN PLAZO en España (Plataforma de Contratación del Sector Público y plataformas autonómicas): título, organismo, provincia, importe, plazo de ofertas, CPV y enlace para presentarse. Filtra por palabras del título (query), CPV, provincia, tipo (supplies, services, works) e importe. Con cif, devuelve las abiertas parecidas a los contratos que esa empresa ya ha ganado: úsala para \"¿a qué concursos se puede presentar esta empresa?\". Plan Business; gasta 1 consulta. Open public tenders in Spain.",
+      inputSchema: {
+        query: z.string().min(3).optional().describe('Palabras que deben aparecer en el título, p. ej. "limpieza colegios"'),
+        cpv: z.string().optional().describe('CPV o su principio, separados por comas (p. ej. "72,48" para informática)'),
+        province: z.string().optional().describe('Provincia del organismo, p. ej. Madrid, Barcelona, Bizkaia'),
+        type: z.enum(['supplies', 'services', 'works']).optional().describe('Tipo de contrato'),
+        min_amount: z.number().min(0).optional().describe('Importe mínimo sin IVA (euros)'),
+        max_amount: z.number().min(0).optional().describe('Importe máximo sin IVA (euros)'),
+        cif: z.string().optional().describe('CIF de una empresa: licitaciones parecidas a lo que ya ha ganado'),
+        limit: z.number().int().min(1).max(50).optional().describe('Número de licitaciones (por defecto 20)'),
+      },
+      annotations: soloLectura,
+    },
+    async ({ query, cpv, province, type, min_amount, max_amount, cif, limit }) =>
+      llamar(`/tenders?${qs({ q: query, cpv, province, type, min_amount, max_amount, cif: cif ? limpiarCif(cif) : undefined, limit: limit ?? 20 })}`),
+  );
+
+  server.registerTool(
+    'check_sanctions',
+    {
+      title: 'Listas de sanciones',
+      description: "Comprueba si una empresa española (por cif, junto con sus administradores vigentes) o un nombre suelto (name) aparece en las listas de sanciones de la UE, la ONU y OFAC (EE. UU.). Devuelve cada coincidencia con su grado (strong o possible), la lista, el programa, la fecha, el país y la fecha de nacimiento para confirmarla o descartarla: un nombre parecido no es una coincidencia confirmada. Úsala en altas de clientes o proveedores (KYB, prevención de blanqueo). Plan Business; gasta 1 consulta. Sanctions screening (EU, UN, OFAC).",
+      inputSchema: {
+        cif: z.string().optional().describe('CIF de la empresa (se comprueban la razón social y los administradores)'),
+        name: z.string().min(3).optional().describe('Nombre de una persona o entidad, en lugar de cif'),
+        type: z.enum(['person', 'entity', 'any']).optional().describe('Con name: person, entity o any'),
+      },
+      annotations: soloLectura,
+    },
+    async ({ cif, name, type }) => {
+      if (!cif && !name) {
+        return texto('Indica el CIF de una empresa (cif) o un nombre de al menos 3 letras (name).', true);
+      }
+      return llamar(`/sanctions/screen?${qs(cif ? { cif: limpiarCif(cif) } : { name, type })}`);
+    },
+  );
+
+  server.registerTool(
     'get_usage',
     {
       title: 'Consumo de la cuenta',
-      description: 'Plan de la cuenta, consultas usadas y disponibles, y saldo de créditos. No gasta consultas. No funciona en el Sandbox.',
+      description: "Plan de la cuenta del usuario, consultas usadas y disponibles y saldo de créditos. No gasta consultas. Úsala si una herramienta responde que se ha agotado el cupo.",
       inputSchema: {},
       annotations: soloLectura,
     },

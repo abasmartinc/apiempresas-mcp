@@ -1,18 +1,32 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.abasmartinc/apiempresas",
-  "description": "Spanish company data: CIF lookup, BORME filings, directors, KYB checks and risk profile.",
+  "description": "Spanish company data: CIF lookup, BORME, directors, KYB, sanctions and open public tenders.",
   "repository": {
     "url": "https://github.com/abasmartinc/apiempresas-mcp",
     "source": "github"
   },
   "websiteUrl": "https://apiempresas.es",
-  "version": "1.1.0",
+  "version": "1.2.0",
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://apiempresas.es/api/mcp",
+      "headers": [
+        {
+          "name": "X-API-KEY",
+          "description": "API key from https://apiempresas.es/dashboard (free plan: 100 requests, no card)",
+          "isRequired": true,
+          "isSecret": true
+        }
+      ]
+    }
+  ],
   "packages": [
     {
       "registryType": "npm",
       "identifier": "apiempresas-mcp",
-      "version": "1.1.0",
+      "version": "1.2.0",
       "transport": {
         "type": "stdio"
       },

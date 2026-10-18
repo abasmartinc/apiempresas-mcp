@@ -1,7 +1,7 @@
 {
   "name": "apiempresas-mcp",
-  "version": "1.1.0",
-  "description": "Servidor MCP oficial de APIEmpresas.es: datos de empresas españolas (CIF, BORME, administradores, KYB, riesgo) para Claude, Cursor y otros asistentes de IA",
+  "version": "1.2.0",
+  "description": "Servidor MCP oficial de APIEmpresas.es: datos de empresas españolas (CIF, BORME, administradores, KYB, listas de sanciones, licitaciones abiertas, riesgo) para Claude, Cursor y otros asistentes de IA",
   "mcpName": "io.github.abasmartinc/apiempresas",
   "type": "module",
   "bin": {

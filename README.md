@@ -15,6 +15,8 @@ Pregunta en lenguaje natural ("¿Mercadona está activa y quiénes son sus admin
 | `get_borme_history` | Actos publicados en el BORME | Pro |
 | `get_risk_profile` | Perfil de riesgo a partir del BORME | Business |
 | `get_public_contracts` | Contratos públicos adjudicados | Business |
+| `search_tenders` | Licitaciones públicas abiertas: por palabras, CPV, provincia, tipo e importe, o parecidas a lo que ya ha ganado una empresa (`cif`) | Business |
+| `check_sanctions` | Listas de sanciones de la UE, la ONU y OFAC: una empresa y sus administradores (`cif`) o un nombre (`name`), con el grado de cada coincidencia | Business |
 | `get_usage` | Plan, consultas disponibles y saldo de créditos (gratis; no funciona en el Sandbox) | Todos |
 
 Todas son de solo lectura. Cada llamada gasta consultas de tu plan, igual que la API.

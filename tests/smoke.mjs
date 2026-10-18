@@ -42,6 +42,12 @@ const api = http.createServer((req, res) => {
     if (u.pathname === '/api/v1/companies/search') {
       return send(200, { success: true, data: [{ cif: 'A46103834', name: 'MERCADONA SA' }], meta: {} });
     }
+    if (u.pathname === '/api/v1/tenders') {
+      return send(200, { success: true, data: { tenders: [{ title: 'Limpieza' }], pagination: { total: 1 } }, meta: {} });
+    }
+    if (u.pathname === '/api/v1/sanctions/screen') {
+      return send(200, { success: true, data: { summary: { result: 'clear' } } });
+    }
     if (u.pathname === '/api/v1/usage') {
       return send(200, { success: true, data: { plan: 'free', used: 3, quota: 100 } });
     }
@@ -69,7 +75,7 @@ const txt = (r) => r.content.map((c) => c.text).join('\n');
 const c = await conectar({ APIEMPRESAS_API_KEY: 'clave-test', APIEMPRESAS_BASE_URL: base });
 const { tools } = await c.listTools();
 const nombres = tools.map((t) => t.name).sort();
-assert.deepEqual(nombres, ['find_cif_by_name', 'get_borme_history', 'get_company', 'get_public_contracts', 'get_risk_profile', 'get_usage', 'search_companies', 'verify_company']);
+assert.deepEqual(nombres, ['check_sanctions', 'find_cif_by_name', 'get_borme_history', 'get_company', 'get_public_contracts', 'get_risk_profile', 'get_usage', 'search_companies', 'search_tenders', 'verify_company']);
 assert.ok(tools.every((t) => t.annotations?.readOnlyHint === true), 'todas de solo lectura');
 
 let r = await c.callTool({ name: 'get_company', arguments: { cif: 'a-46.103 834', include_directors: true } });
@@ -102,6 +108,17 @@ assert.deepEqual(JSON.parse(v.body), { items: [{ name: 'Mercadona' }, { name: 'I
 r = await c.callTool({ name: 'search_companies', arguments: { query: 'mercadona' } });
 assert.ok(!r.isError);
 assert.equal(vistas.at(-1).url, '/api/v1/companies/search?q=mercadona&multiple=true&limit=10');
+
+r = await c.callTool({ name: 'search_tenders', arguments: { query: 'limpieza', province: 'Madrid', type: 'services' } });
+assert.ok(!r.isError, txt(r));
+assert.equal(vistas.at(-1).url, '/api/v1/tenders?q=limpieza&province=Madrid&type=services&limit=20');
+
+r = await c.callTool({ name: 'check_sanctions', arguments: { cif: 'a46103834' } });
+assert.ok(!r.isError, txt(r));
+assert.equal(vistas.at(-1).url, '/api/v1/sanctions/screen?cif=A46103834');
+
+r = await c.callTool({ name: 'check_sanctions', arguments: {} });
+assert.equal(r.isError, true);
 
 r = await c.callTool({ name: 'get_usage', arguments: {} });
 assert.ok(!r.isError);
