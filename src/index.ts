@@ -15,7 +15,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
 
-export const VERSION = '1.2.0';
+export const VERSION = '1.3.0';
 
 const API_KEY = (process.env.APIEMPRESAS_API_KEY || '').trim();
 const BASE_URL = (process.env.APIEMPRESAS_BASE_URL || 'https://apiempresas.es/api/v1').replace(/\/+$/, '');
@@ -269,6 +269,23 @@ export function crearServidor(): McpServer {
     },
     async ({ cif, page, limit }) =>
       llamar(`/companies/contracts?${qs({ cif: limpiarCif(cif), page: page ?? 1, limit: limit ?? 20 })}`),
+  );
+
+  // 1.3.0 (20-10-2026): igual que en el servidor remoto (app/Libraries/McpServer.php)
+  server.registerTool(
+    'get_subsidies',
+    {
+      title: 'Subvenciones y ayudas públicas',
+      description: "Subvenciones, préstamos, garantías y ventajas fiscales concedidos a una empresa española según la Base de Datos Nacional de Subvenciones (BDNS), desde 2022, Kit Digital incluido: resumen por año, por instrumento y las convocatorias con más importe, y la lista de concesiones. Úsala para prospección de ayudas o para saber cuánto dinero público recibe. Plan Business; gasta 1 consulta. Public grants received by a Spanish company.",
+      inputSchema: {
+        cif: cifSchema,
+        year: z.number().int().min(2000).optional().describe('Solo las concesiones de ese año'),
+        limit: z.number().int().min(1).max(50).optional().describe('Concesiones por página (por defecto 20)'),
+      },
+      annotations: soloLectura,
+    },
+    async ({ cif, year, limit }) =>
+      llamar(`/companies/subsidies?${qs({ cif: limpiarCif(cif), year, limit: limit ?? 20 })}`),
   );
 
   server.registerTool(

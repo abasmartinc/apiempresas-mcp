@@ -48,6 +48,9 @@ const api = http.createServer((req, res) => {
     if (u.pathname === '/api/v1/sanctions/screen') {
       return send(200, { success: true, data: { summary: { result: 'clear' } } });
     }
+    if (u.pathname === '/api/v1/companies/subsidies') {
+      return send(200, { success: true, data: { cif: u.searchParams.get('cif'), summary: { total_grants: 1, total_amount: '2000.00' }, grants: [] } });
+    }
     if (u.pathname === '/api/v1/usage') {
       return send(200, { success: true, data: { plan: 'free', used: 3, quota: 100 } });
     }
@@ -75,7 +78,7 @@ const txt = (r) => r.content.map((c) => c.text).join('\n');
 const c = await conectar({ APIEMPRESAS_API_KEY: 'clave-test', APIEMPRESAS_BASE_URL: base });
 const { tools } = await c.listTools();
 const nombres = tools.map((t) => t.name).sort();
-assert.deepEqual(nombres, ['check_sanctions', 'find_cif_by_name', 'get_borme_history', 'get_company', 'get_public_contracts', 'get_risk_profile', 'get_usage', 'search_companies', 'search_tenders', 'verify_company']);
+assert.deepEqual(nombres, ['check_sanctions', 'find_cif_by_name', 'get_borme_history', 'get_company', 'get_public_contracts', 'get_risk_profile', 'get_subsidies', 'get_usage', 'search_companies', 'search_tenders', 'verify_company']);
 assert.ok(tools.every((t) => t.annotations?.readOnlyHint === true), 'todas de solo lectura');
 
 let r = await c.callTool({ name: 'get_company', arguments: { cif: 'a-46.103 834', include_directors: true } });
@@ -119,6 +122,10 @@ assert.equal(vistas.at(-1).url, '/api/v1/sanctions/screen?cif=A46103834');
 
 r = await c.callTool({ name: 'check_sanctions', arguments: {} });
 assert.equal(r.isError, true);
+
+r = await c.callTool({ name: 'get_subsidies', arguments: { cif: 'b-12345678', year: 2024 } });
+assert.ok(!r.isError);
+assert.equal(vistas.at(-1).url, '/api/v1/companies/subsidies?cif=B12345678&year=2024&limit=20');
 
 r = await c.callTool({ name: 'get_usage', arguments: {} });
 assert.ok(!r.isError);
