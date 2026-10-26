@@ -15,7 +15,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
 
-export const VERSION = '1.3.0';
+export const VERSION = '1.4.0';
 
 const API_KEY = (process.env.APIEMPRESAS_API_KEY || '').trim();
 const BASE_URL = (process.env.APIEMPRESAS_BASE_URL || 'https://apiempresas.es/api/v1').replace(/\/+$/, '');
@@ -228,6 +228,40 @@ export function crearServidor(): McpServer {
         method: 'POST',
         body: JSON.stringify({ items: names.map((name) => (province ? { name, province } : { name })) }),
       }),
+  );
+
+  // 1.4.0 (26-10-2026): igual que en el servidor remoto (app/Libraries/McpServer.php)
+  server.registerTool(
+    'verify_invoice_recipients',
+    {
+      title: 'Validar NIF de clientes para facturar',
+      description:
+        "Valida una LISTA de clientes (hasta 100) antes de emitirles facturas (Verifactu, factura electrónica): por cada NIF, si el formato es válido, si la sociedad consta, su razón social y domicilio oficiales, su estado y, si das el nombre que tienes guardado, si coincide. Devuelve invoice_hint ok / revisar / no_facturar con los motivos (extinguida, absorbida, en concurso, nombre distinto, NIF de ejemplo...). Úsala para revisar la cartera de clientes de un programa de facturación o ERP; para dar de alta a un solo cliente con más detalle, verify_company. No sustituye al censo de la AEAT. Plan Pro, Business o saldo; gasta 1 consulta por sociedad encontrada (lo que no consta no se cobra). Bulk VAT/tax ID check of invoice recipients.",
+      inputSchema: {
+        items: z
+          .array(
+            z.object({
+              cif: z.string().min(1).describe('NIF del cliente (CIF, DNI o NIE)'),
+              name: z.string().optional().describe('Razón social que tienes guardada, para comprobar que coincide con la oficial'),
+              ref: z.string().optional().describe('Tu identificador del cliente; se devuelve tal cual'),
+            }),
+          )
+          .min(1)
+          .max(100)
+          .describe('Clientes a validar'),
+        vat: z.boolean().optional().describe('true para comprobar además el NIF-IVA en VIES (solo con 20 clientes o menos)'),
+      },
+      annotations: soloLectura,
+    },
+    async ({ items, vat }) => {
+      if (vat && items.length > 20) {
+        return texto('La comprobación en VIES (vat) solo admite 20 clientes por llamada. Quita vat o divide la lista.', true);
+      }
+      return llamar('/companies/verify/batch', {
+        method: 'POST',
+        body: JSON.stringify(vat ? { items, vat: true } : { items }),
+      });
+    },
   );
 
   server.registerTool(

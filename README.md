@@ -12,6 +12,7 @@ Pregunta en lenguaje natural ("¿Mercadona está activa y quiénes son sus admin
 | `search_companies` | Buscar empresas por nombre | Free |
 | `verify_company` | Verificación KYB: existe, activa, nombre y administrador (o socio único) coinciden y, si se pide, NIF-IVA en VIES; con forma jurídica, LEI, matriz y socio único (2 consultas) | Pro |
 | `find_cif_by_name` | De nombre a CIF, hasta 100 a la vez, con provincia opcional para desempatar (solo cobra las coincidencias) | Pro |
+| `verify_invoice_recipients` | Valida una lista de clientes (hasta 100) antes de facturarles: razón social y domicilio oficiales, estado y `invoice_hint` ok / revisar / no_facturar, con sus motivos; con `vat`, también VIES (hasta 20). Solo cobra las sociedades encontradas (desde 1.4.0) | Pro |
 | `get_borme_history` | Actos publicados en el BORME | Pro |
 | `get_risk_profile` | Perfil de riesgo a partir del BORME | Business |
 | `get_public_contracts` | Contratos públicos adjudicados | Business |
@@ -83,7 +84,7 @@ Con `APIEMPRESAS_BASE_URL=https://apiempresas.es/api/sandbox/v1` las llamadas no
 
 ## English
 
-Official MCP server for [APIEmpresas.es](https://apiempresas.es), a REST API for Spanish company data: lookup by CIF (tax ID), name search, KYB verification, directors, BORME (Commercial Registry gazette) filings, public contracts and risk profile. Get a free API key (100 requests) at apiempresas.es and run `npx -y apiempresas-mcp` with `APIEMPRESAS_API_KEY` set.
+Official MCP server for [APIEmpresas.es](https://apiempresas.es), a REST API for Spanish company data: lookup by CIF (tax ID), name search, KYB verification, bulk tax ID checks of invoice recipients (`verify_invoice_recipients`), directors, BORME (Commercial Registry gazette) filings, public contracts and risk profile. Get a free API key (100 requests) at apiempresas.es and run `npx -y apiempresas-mcp` with `APIEMPRESAS_API_KEY` set.
 
 ## Licencia
 

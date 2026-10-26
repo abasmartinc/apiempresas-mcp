@@ -39,6 +39,9 @@ const api = http.createServer((req, res) => {
     if (u.pathname === '/api/v1/companies/reconcile') {
       return send(200, { success: true, data: JSON.parse(body).items.map((i) => ({ name: i.name, status: 'match' })), meta: {} });
     }
+    if (u.pathname === '/api/v1/companies/verify/batch') {
+      return send(200, { success: true, data: JSON.parse(body).items.map((i) => ({ input: i.cif, cif: i.cif, invoice_hint: 'ok', flags: [] })), meta: { requested: 1, found: 1, cost: 1 } });
+    }
     if (u.pathname === '/api/v1/companies/search') {
       return send(200, { success: true, data: [{ cif: 'A46103834', name: 'MERCADONA SA' }], meta: {} });
     }
@@ -78,7 +81,7 @@ const txt = (r) => r.content.map((c) => c.text).join('\n');
 const c = await conectar({ APIEMPRESAS_API_KEY: 'clave-test', APIEMPRESAS_BASE_URL: base });
 const { tools } = await c.listTools();
 const nombres = tools.map((t) => t.name).sort();
-assert.deepEqual(nombres, ['check_sanctions', 'find_cif_by_name', 'get_borme_history', 'get_company', 'get_public_contracts', 'get_risk_profile', 'get_subsidies', 'get_usage', 'search_companies', 'search_tenders', 'verify_company']);
+assert.deepEqual(nombres, ['check_sanctions', 'find_cif_by_name', 'get_borme_history', 'get_company', 'get_public_contracts', 'get_risk_profile', 'get_subsidies', 'get_usage', 'search_companies', 'search_tenders', 'verify_company', 'verify_invoice_recipients']);
 assert.ok(tools.every((t) => t.annotations?.readOnlyHint === true), 'todas de solo lectura');
 
 let r = await c.callTool({ name: 'get_company', arguments: { cif: 'a-46.103 834', include_directors: true } });
@@ -107,6 +110,23 @@ assert.ok(!r.isError, txt(r));
 v = vistas.at(-1);
 assert.equal(v.method, 'POST');
 assert.deepEqual(JSON.parse(v.body), { items: [{ name: 'Mercadona' }, { name: 'Inditex' }] });
+
+r = await c.callTool({ name: 'verify_invoice_recipients', arguments: { items: [{ cif: 'A46103834' }, { cif: 'A15075062', name: 'Inditex', ref: 'c-2' }] } });
+assert.ok(!r.isError, txt(r));
+v = vistas.at(-1);
+assert.equal(v.method, 'POST');
+assert.equal(v.url, '/api/v1/companies/verify/batch');
+assert.deepEqual(JSON.parse(v.body), { items: [{ cif: 'A46103834' }, { cif: 'A15075062', name: 'Inditex', ref: 'c-2' }] });
+
+r = await c.callTool({ name: 'verify_invoice_recipients', arguments: { items: [{ cif: 'A46103834' }], vat: true } });
+assert.deepEqual(JSON.parse(vistas.at(-1).body), { items: [{ cif: 'A46103834' }], vat: true });
+
+const muchos = Array.from({ length: 21 }, () => ({ cif: 'A46103834' }));
+const antesVat = vistas.length;
+r = await c.callTool({ name: 'verify_invoice_recipients', arguments: { items: muchos, vat: true } });
+assert.equal(r.isError, true);
+assert.match(txt(r), /solo admite 20/);
+assert.equal(vistas.length, antesVat, 'no llama a la API');
 
 r = await c.callTool({ name: 'search_companies', arguments: { query: 'mercadona' } });
 assert.ok(!r.isError);
