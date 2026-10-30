@@ -7,7 +7,7 @@
     "source": "github"
   },
   "websiteUrl": "https://apiempresas.es",
-  "version": "1.4.0",
+  "version": "1.4.1",
   "remotes": [
     {
       "type": "streamable-http",
@@ -15,8 +15,8 @@
       "headers": [
         {
           "name": "X-API-KEY",
-          "description": "API key from https://apiempresas.es/dashboard (free plan: 100 requests, no card)",
-          "isRequired": true,
+          "description": "Optional. API key from https://apiempresas.es/dashboard (free plan: 100 requests, no card). Without a key, name search and basic company data still work.",
+          "isRequired": false,
           "isSecret": true
         }
       ]
