@@ -15,7 +15,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
 
-export const VERSION = '1.4.2';
+export const VERSION = '1.4.3';
 
 const API_KEY = (process.env.APIEMPRESAS_API_KEY || '').trim();
 const BASE_URL = (process.env.APIEMPRESAS_BASE_URL || 'https://apiempresas.es/api/v1').replace(/\/+$/, '');
@@ -48,7 +48,7 @@ const cifSchema = z
   .string()
   .min(9)
   .max(15)
-  .describe('CIF/NIF de la empresa española, p. ej. A46103834 (se aceptan espacios y guiones)');
+  .describe('Spanish company tax ID (CIF/NIF), e.g. A46103834 (spaces and hyphens are accepted)');
 
 /** Mensaje de error útil para el asistente y para la persona: qué pasó y qué hacer. */
 function mensajeError(status: number, body: any): string {
@@ -159,15 +159,15 @@ export function crearServidor(): McpServer {
   server.registerTool(
     'get_company',
     {
-      title: 'Empresa por CIF',
+      title: 'Spanish company by tax ID',
       description:
-        "Ficha de UNA empresa española cuando ya tienes su CIF/NIF. Úsala para saber si existe y está activa, su razón social, forma jurídica (con código ISO 20275), código LEI, CNAE, provincia y fecha de constitución; con plan Pro, también domicilio, tramo de facturación, socio único, matriz del grupo y, con include_directors, los administradores vigentes. En todos los planes avisa si la Agencia Tributaria ha revocado (o rehabilitado) su NIF según el BOE (tax_id_revocation): con el NIF revocado no vale ante Hacienda y los bancos no pueden hacerle cobros ni pagos. Si no tienes el CIF, usa search_companies; para decidir un alta (KYB), verify_company. Gasta 1 consulta. Spanish company lookup by tax ID.",
+        "Record of ONE Spanish company when you already have its tax ID (CIF/NIF). Use it to find out whether it exists and is active, its legal name, legal form (with ISO 20275 code), LEI, CNAE activity code, province and incorporation date; on the Pro plan, also its registered office, revenue band, sole shareholder, parent company and, with include_directors, its current directors. On every plan it flags whether the Spanish Tax Agency has revoked (or reinstated) its tax ID according to the BOE gazette (tax_id_revocation): a revoked tax ID is not valid for tax purposes and banks cannot process payments to or from it. If you do not have the tax ID, use search_companies; to decide on onboarding (KYB), use verify_company. Uses 1 request. Búsqueda de empresa española por CIF.",
       inputSchema: {
         cif: cifSchema,
         include_directors: z
           .boolean()
           .optional()
-          .describe('true para incluir administradores y cargos vigentes (planes Pro y Business)'),
+          .describe('true to include current directors and officers (Pro and Business plans)'),
       },
       annotations: soloLectura,
     },
@@ -178,12 +178,12 @@ export function crearServidor(): McpServer {
   server.registerTool(
     'search_companies',
     {
-      title: 'Buscar empresas por nombre',
+      title: 'Search Spanish companies by name',
       description:
-        "Busca empresas españolas por nombre o parte del nombre y devuelve las candidatas con su CIF, provincia y estado. Úsala cuando NO tienes el CIF de una empresa concreta; después, get_company con el CIF elegido. Para convertir una lista de muchos nombres en CIF, mejor find_cif_by_name. Search Spanish companies by name.",
+        "Searches Spanish companies by full or partial name and returns the candidates with their tax ID (CIF), province and status. Use it when you do NOT have the tax ID of a specific company; then call get_company with the chosen tax ID. To turn a long list of names into tax IDs, use find_cif_by_name instead. Buscar empresas españolas por nombre.",
       inputSchema: {
-        query: z.string().min(2).describe('Nombre o parte del nombre de la empresa'),
-        limit: z.number().int().min(1).max(25).optional().describe('Número máximo de resultados (por defecto 10)'),
+        query: z.string().min(2).describe('Full or partial company name'),
+        limit: z.number().int().min(1).max(25).optional().describe('Maximum number of results (default 10)'),
       },
       annotations: soloLectura,
     },
@@ -193,14 +193,14 @@ export function crearServidor(): McpServer {
   server.registerTool(
     'verify_company',
     {
-      title: 'Verificación KYB',
+      title: 'KYB verification of a Spanish company',
       description:
-        "Verificación para dar de alta a un cliente o proveedor (KYB) en una llamada: comprueba que la sociedad existe y opera, que la razón social que te han dado coincide (name), que quien firma es administrador vigente o socio único (person) y, si se pide, el NIF-IVA en VIES (vat). Da fail si la Agencia Tributaria ha revocado su NIF (alerta TAX_ID_REVOKED). Devuelve alertas y una recomendación pass / review / fail, además de forma jurídica, LEI, matriz y socio único. Úsala para decidir; para solo consultar datos, get_company. Plan Pro; gasta 2 consultas. KYB check for a Spanish company.",
+        "One-call check to onboard a customer or supplier (KYB): verifies that the company exists and is operating, that the legal name you were given matches (name), that the signer is a current director or sole shareholder (person) and, if requested, the EU VAT number in VIES (vat). Returns fail if the Spanish Tax Agency has revoked its tax ID (flag TAX_ID_REVOKED). Returns flags and a pass / review / fail recommendation, plus legal form, LEI, parent company and sole shareholder. Use it to make a decision; to just look up data, use get_company. Pro plan; uses 2 requests. Verificación KYB de una empresa española.",
       inputSchema: {
         cif: cifSchema,
-        name: z.string().optional().describe('Razón social que ha declarado el cliente, para comprobar que coincide'),
-        person: z.string().optional().describe('Nombre de la persona que firma, para comprobar si es administradora o socia única'),
-        vat: z.boolean().optional().describe('true para comprobar además el NIF-IVA en VIES (operador intracomunitario)'),
+        name: z.string().optional().describe('Legal name declared by the customer, to check that it matches'),
+        person: z.string().optional().describe('Name of the person signing, to check whether they are a director or the sole shareholder'),
+        vat: z.boolean().optional().describe('true to also check the EU VAT number in VIES (intra-EU trader)'),
       },
       annotations: soloLectura,
     },
@@ -211,15 +211,15 @@ export function crearServidor(): McpServer {
   server.registerTool(
     'find_cif_by_name',
     {
-      title: 'De nombre a CIF',
+      title: 'Company names to tax IDs',
       description:
-        "Convierte una LISTA de nombres de empresa (hasta 100) en sus CIF, con resultado match, ambiguous o no_match para cada uno. Úsala para completar hojas de clientes o proveedores que solo tienen el nombre. Solo los match gastan consulta. Para un solo nombre, search_companies. Plan Pro.",
+        "Turns a LIST of Spanish company names (up to 100) into their tax IDs (CIF), with a match, ambiguous or no_match result for each. Use it to complete customer or supplier sheets that only have the name. Only matches use a request. For a single name, use search_companies. Pro plan. De nombre de empresa a CIF.",
       inputSchema: {
-        names: z.array(z.string().min(2)).min(1).max(100).describe('Nombres de empresas'),
+        names: z.array(z.string().min(2)).min(1).max(100).describe('Company names'),
         province: z
           .string()
           .optional()
-          .describe('Provincia (p. ej. VALENCIA) para desempatar entre empresas con el mismo nombre; se aplica a todos'),
+          .describe('Province (e.g. VALENCIA) to break ties between companies with the same name; applies to all names'),
       },
       annotations: soloLectura,
     },
@@ -234,22 +234,22 @@ export function crearServidor(): McpServer {
   server.registerTool(
     'verify_invoice_recipients',
     {
-      title: 'Validar NIF de clientes para facturar',
+      title: 'Check invoice recipients\' tax IDs',
       description:
-        "Valida una LISTA de clientes (hasta 100) antes de emitirles facturas (Verifactu, factura electrónica): por cada NIF, si el formato es válido, si la sociedad consta, su razón social y domicilio oficiales, su estado y, si das el nombre que tienes guardado, si coincide. Devuelve invoice_hint ok / revisar / no_facturar con los motivos (extinguida, absorbida, en concurso, NIF revocado por la AEAT, nombre distinto, NIF de ejemplo...). Úsala para revisar la cartera de clientes de un programa de facturación o ERP; para dar de alta a un solo cliente con más detalle, verify_company. No sustituye al censo de la AEAT. Plan Pro, Business o saldo; gasta 1 consulta por sociedad encontrada (lo que no consta no se cobra). Bulk VAT/tax ID check of invoice recipients.",
+        "Checks a LIST of Spanish customers (up to 100) before invoicing them (VERI*FACTU, e-invoicing): for each tax ID, whether the format is valid, whether the company is registered, its legal name and registered office, its status and, if you pass the name you hold, whether it matches. Returns invoice_hint ok / revisar (review) / no_facturar (do not invoice) with the reasons (struck off, absorbed, insolvent, tax ID revoked by the Tax Agency, name mismatch, sample tax ID...). Use it to review the customer base of an invoicing program or ERP; to onboard a single customer in more detail, use verify_company. It does not replace the Tax Agency census. Pro or Business plan, or credits; uses 1 request per company found (tax IDs not found are free). Validar el NIF de los clientes antes de facturar.",
       inputSchema: {
         items: z
           .array(
             z.object({
-              cif: z.string().min(1).describe('NIF del cliente (CIF, DNI o NIE)'),
-              name: z.string().optional().describe('Razón social que tienes guardada, para comprobar que coincide con la oficial'),
-              ref: z.string().optional().describe('Tu identificador del cliente; se devuelve tal cual'),
+              cif: z.string().min(1).describe('Customer tax ID (CIF, DNI or NIE)'),
+              name: z.string().optional().describe('Legal name you hold, to check that it matches the registered one'),
+              ref: z.string().optional().describe('Your own customer identifier; returned as is'),
             }),
           )
           .min(1)
           .max(100)
-          .describe('Clientes a validar'),
-        vat: z.boolean().optional().describe('true para comprobar además el NIF-IVA en VIES (solo con 20 clientes o menos)'),
+          .describe('Customers to check'),
+        vat: z.boolean().optional().describe('true to also check the EU VAT number in VIES (only with 20 customers or fewer)'),
       },
       annotations: soloLectura,
     },
@@ -267,9 +267,9 @@ export function crearServidor(): McpServer {
   server.registerTool(
     'get_borme_history',
     {
-      title: 'Historial del BORME',
+      title: 'BORME registry history',
       description:
-        "Todos los actos publicados en el BORME de una empresa, con fecha y PDF oficial: constitución, nombramientos y ceses, ampliaciones de capital, cambios de domicilio o de nombre, disolución, concurso... Úsala para la historia y los cambios recientes; para el estado actual basta get_company. Plan Pro.",
+        "Every event a Spanish company has published in the BORME (Commercial Registry gazette), with date and PDF: incorporation, director appointments and removals, capital increases, changes of address or name, dissolution, insolvency... Use it for the company history and recent changes; for the current status, get_company is enough. Pro plan. Historial de actos del BORME.",
       inputSchema: { cif: cifSchema },
       annotations: soloLectura,
     },
@@ -279,9 +279,9 @@ export function crearServidor(): McpServer {
   server.registerTool(
     'get_risk_profile',
     {
-      title: 'Perfil de riesgo',
+      title: 'Risk profile',
       description:
-        "Nivel de riesgo de una empresa y sus motivos, calculado a partir de sus publicaciones en el BORME (concursos, disoluciones, cierres de hoja registral, cuentas no depositadas, cambios de administradores...). Úsala antes de dar crédito o firmar con un proveedor. Plan Business.",
+        "Risk level of a Spanish company and its reasons, worked out from its BORME publications (insolvency, dissolution, closed registry sheet, accounts not filed, director changes...). Use it before extending credit or signing with a supplier. Business plan. Perfil de riesgo de una empresa.",
       inputSchema: { cif: cifSchema },
       annotations: soloLectura,
     },
@@ -291,13 +291,13 @@ export function crearServidor(): McpServer {
   server.registerTool(
     'get_public_contracts',
     {
-      title: 'Contratos públicos',
+      title: 'Public contracts awarded',
       description:
-        "Contratos del sector público adjudicados a una empresa (Plataforma de Contratación del Sector Público): organismo, objeto, importe y fecha. Plan Business.",
+        "Public sector contracts awarded to a Spanish company (Spanish Public Procurement Platform): contracting body, subject, amount and date. Business plan. Contratos públicos adjudicados.",
       inputSchema: {
         cif: cifSchema,
-        page: z.number().int().min(1).optional().describe('Página (por defecto 1)'),
-        limit: z.number().int().min(1).max(50).optional().describe('Contratos por página (por defecto 20)'),
+        page: z.number().int().min(1).optional().describe('Page (default 1)'),
+        limit: z.number().int().min(1).max(50).optional().describe('Contracts per page (default 20)'),
       },
       annotations: soloLectura,
     },
@@ -309,12 +309,12 @@ export function crearServidor(): McpServer {
   server.registerTool(
     'get_subsidies',
     {
-      title: 'Subvenciones y ayudas públicas',
-      description: "Subvenciones, préstamos, garantías y ventajas fiscales concedidos a una empresa española según la Base de Datos Nacional de Subvenciones (BDNS), desde 2022, Kit Digital incluido: resumen por año, por instrumento y las convocatorias con más importe, y la lista de concesiones. Úsala para prospección de ayudas o para saber cuánto dinero público recibe. Plan Business; gasta 1 consulta. Public grants received by a Spanish company.",
+      title: 'Public grants and subsidies',
+      description: "Grants, loans, guarantees and tax benefits awarded to a Spanish company according to the national grants database (BDNS), since 2022, Kit Digital included: summary by year, by instrument and the largest calls, plus the list of awards. Use it to research public funding or to see how much public money a company receives. Business plan; uses 1 request. Subvenciones y ayudas públicas.",
       inputSchema: {
         cif: cifSchema,
-        year: z.number().int().min(2000).optional().describe('Solo las concesiones de ese año'),
-        limit: z.number().int().min(1).max(50).optional().describe('Concesiones por página (por defecto 20)'),
+        year: z.number().int().min(2000).optional().describe('Only awards from that year'),
+        limit: z.number().int().min(1).max(50).optional().describe('Awards per page (default 20)'),
       },
       annotations: soloLectura,
     },
@@ -325,17 +325,17 @@ export function crearServidor(): McpServer {
   server.registerTool(
     'search_tenders',
     {
-      title: 'Licitaciones públicas abiertas',
-      description: "Licitaciones públicas EN PLAZO en España (Plataforma de Contratación del Sector Público y plataformas autonómicas): título, organismo, provincia, importe, plazo de ofertas, CPV y enlace para presentarse. Filtra por palabras del título (query), CPV, provincia, tipo (supplies, services, works) e importe. Con cif, devuelve las abiertas parecidas a los contratos que esa empresa ya ha ganado: úsala para \"¿a qué concursos se puede presentar esta empresa?\". Plan Business; gasta 1 consulta. Open public tenders in Spain.",
+      title: 'Open public tenders in Spain',
+      description: "Public tenders in Spain that are still OPEN for bids (Spanish Public Procurement Platform and regional platforms): title, contracting body, province, amount, bid deadline, CPV and link to apply. Filter by words in the title (query, in Spanish), CPV, province, type (supplies, services, works) and amount. With cif, returns open tenders similar to the contracts that company has already won: use it for \"which tenders could this company bid for?\". Business plan; uses 1 request. Licitaciones públicas abiertas.",
       inputSchema: {
-        query: z.string().min(3).optional().describe('Palabras que deben aparecer en el título, p. ej. "limpieza colegios"'),
-        cpv: z.string().optional().describe('CPV o su principio, separados por comas (p. ej. "72,48" para informática)'),
-        province: z.string().optional().describe('Provincia del organismo, p. ej. Madrid, Barcelona, Bizkaia'),
-        type: z.enum(['supplies', 'services', 'works']).optional().describe('Tipo de contrato'),
-        min_amount: z.number().min(0).optional().describe('Importe mínimo sin IVA (euros)'),
-        max_amount: z.number().min(0).optional().describe('Importe máximo sin IVA (euros)'),
-        cif: z.string().optional().describe('CIF de una empresa: licitaciones parecidas a lo que ya ha ganado'),
-        limit: z.number().int().min(1).max(50).optional().describe('Número de licitaciones (por defecto 20)'),
+        query: z.string().min(3).optional().describe('Words that must appear in the title, in Spanish, e.g. "limpieza colegios"'),
+        cpv: z.string().optional().describe('CPV code or its prefix, comma-separated (e.g. "72,48" for IT)'),
+        province: z.string().optional().describe('Province of the contracting body, e.g. Madrid, Barcelona, Bizkaia'),
+        type: z.enum(['supplies', 'services', 'works']).optional().describe('Contract type'),
+        min_amount: z.number().min(0).optional().describe('Minimum amount excluding VAT (euros)'),
+        max_amount: z.number().min(0).optional().describe('Maximum amount excluding VAT (euros)'),
+        cif: z.string().optional().describe('Tax ID of a company: tenders similar to what it has already won'),
+        limit: z.number().int().min(1).max(50).optional().describe('Number of tenders (default 20)'),
       },
       annotations: soloLectura,
     },
@@ -346,12 +346,12 @@ export function crearServidor(): McpServer {
   server.registerTool(
     'check_sanctions',
     {
-      title: 'Listas de sanciones',
-      description: "Comprueba si una empresa española (por cif, junto con sus administradores vigentes) o un nombre suelto (name) aparece en las listas de sanciones de la UE, la ONU y OFAC (EE. UU.). Devuelve cada coincidencia con su grado (strong o possible), la lista, el programa, la fecha, el país y la fecha de nacimiento para confirmarla o descartarla: un nombre parecido no es una coincidencia confirmada. Úsala en altas de clientes o proveedores (KYB, prevención de blanqueo). Plan Business; gasta 1 consulta. Sanctions screening (EU, UN, OFAC).",
+      title: 'Sanctions screening (EU, UN, OFAC)',
+      description: "Checks whether a Spanish company (by cif, together with its current directors) or a single name (name) appears on the EU, UN and OFAC (US) sanctions lists. Returns each match with its strength (strong or possible), list, programme, date, country and date of birth so it can be confirmed or ruled out: a similar name is not a confirmed match. Use it when onboarding customers or suppliers (KYB, anti-money laundering). Business plan; uses 1 request. Listas de sanciones.",
       inputSchema: {
-        cif: z.string().optional().describe('CIF de la empresa (se comprueban la razón social y los administradores)'),
-        name: z.string().min(3).optional().describe('Nombre de una persona o entidad, en lugar de cif'),
-        type: z.enum(['person', 'entity', 'any']).optional().describe('Con name: person, entity o any'),
+        cif: z.string().optional().describe('Company tax ID (the legal name and the directors are checked)'),
+        name: z.string().min(3).optional().describe('Name of a person or entity, instead of cif'),
+        type: z.enum(['person', 'entity', 'any']).optional().describe('With name: person, entity or any'),
       },
       annotations: soloLectura,
     },
@@ -366,8 +366,8 @@ export function crearServidor(): McpServer {
   server.registerTool(
     'get_usage',
     {
-      title: 'Consumo de la cuenta',
-      description: "Plan de la cuenta del usuario, consultas usadas y disponibles y saldo de créditos. No gasta consultas. Úsala si una herramienta responde que se ha agotado el cupo.",
+      title: 'Account usage',
+      description: "The user's plan, requests used and available, and credit balance. Uses no requests. Use it when a tool says the quota has run out. Consumo de la cuenta.",
       inputSchema: {},
       annotations: soloLectura,
     },

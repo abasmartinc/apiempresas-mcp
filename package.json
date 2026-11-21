@@ -1,6 +1,6 @@
 {
   "name": "apiempresas-mcp",
-  "version": "1.4.2",
+  "version": "1.4.3",
   "description": "Official MCP server for SpainCompanyAPI (APIEmpresas.es): Spanish company data for Claude, Cursor and other AI assistants. Tax ID (CIF/NIF) lookup, KYB verification, invoice recipient checks, directors, BORME filings, sanctions screening, public tenders and risk.",
   "mcpName": "io.github.abasmartinc/apiempresas",
   "type": "module",
