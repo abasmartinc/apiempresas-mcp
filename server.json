@@ -1,13 +1,13 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.abasmartinc/apiempresas",
-  "title": "APIEmpresas: Spanish company data",
-  "description": "Spanish company data: CIF lookup, BORME, directors, KYB, sanctions and open public tenders.",
+  "title": "SpainCompanyAPI: Spanish company data",
+  "description": "Spanish company data: tax ID lookup, KYB, invoice recipient checks, directors, sanctions, tenders.",
   "repository": {
     "url": "https://github.com/abasmartinc/apiempresas-mcp",
     "source": "github"
   },
-  "websiteUrl": "https://apiempresas.es",
+  "websiteUrl": "https://spaincompanyapi.com",
   "icons": [
     {
       "src": "https://apiempresas.es/icon-192.png",
@@ -17,7 +17,7 @@
       ]
     }
   ],
-  "version": "1.4.2",
+  "version": "1.4.4",
   "remotes": [
     {
       "type": "streamable-http",
@@ -25,7 +25,7 @@
       "headers": [
         {
           "name": "X-API-KEY",
-          "description": "Optional. API key from https://apiempresas.es/dashboard (free plan: 100 requests, no card). Without a key, name search and basic company data still work.",
+          "description": "Optional. API key from https://spaincompanyapi.com (free plan: 100 requests, no card). Without a key, name search and basic company data still work.",
           "isRequired": false,
           "isSecret": true
         }
@@ -36,14 +36,14 @@
     {
       "registryType": "npm",
       "identifier": "apiempresas-mcp",
-      "version": "1.4.0",
+      "version": "1.4.2",
       "transport": {
         "type": "stdio"
       },
       "environmentVariables": [
         {
           "name": "APIEMPRESAS_API_KEY",
-          "description": "API key from https://apiempresas.es/dashboard (free plan: 100 requests, no card)",
+          "description": "API key from https://spaincompanyapi.com (free plan: 100 requests, no card)",
           "isRequired": true,
           "isSecret": true
         }

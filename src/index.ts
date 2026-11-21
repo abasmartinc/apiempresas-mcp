@@ -15,7 +15,7 @@ import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { z } from 'zod';
 
-export const VERSION = '1.4.0';
+export const VERSION = '1.4.2';
 
 const API_KEY = (process.env.APIEMPRESAS_API_KEY || '').trim();
 const BASE_URL = (process.env.APIEMPRESAS_BASE_URL || 'https://apiempresas.es/api/v1').replace(/\/+$/, '');
@@ -161,7 +161,7 @@ export function crearServidor(): McpServer {
     {
       title: 'Empresa por CIF',
       description:
-        "Ficha de UNA empresa española cuando ya tienes su CIF/NIF. Úsala para saber si existe y está activa, su razón social, forma jurídica (con código ISO 20275), código LEI, CNAE, provincia y fecha de constitución; con plan Pro, también domicilio, tramo de facturación, socio único, matriz del grupo y, con include_directors, los administradores vigentes. Si no tienes el CIF, usa search_companies; para decidir un alta (KYB), verify_company. Gasta 1 consulta. Spanish company lookup by tax ID.",
+        "Ficha de UNA empresa española cuando ya tienes su CIF/NIF. Úsala para saber si existe y está activa, su razón social, forma jurídica (con código ISO 20275), código LEI, CNAE, provincia y fecha de constitución; con plan Pro, también domicilio, tramo de facturación, socio único, matriz del grupo y, con include_directors, los administradores vigentes. En todos los planes avisa si la Agencia Tributaria ha revocado (o rehabilitado) su NIF según el BOE (tax_id_revocation): con el NIF revocado no vale ante Hacienda y los bancos no pueden hacerle cobros ni pagos. Si no tienes el CIF, usa search_companies; para decidir un alta (KYB), verify_company. Gasta 1 consulta. Spanish company lookup by tax ID.",
       inputSchema: {
         cif: cifSchema,
         include_directors: z
@@ -195,7 +195,7 @@ export function crearServidor(): McpServer {
     {
       title: 'Verificación KYB',
       description:
-        "Verificación para dar de alta a un cliente o proveedor (KYB) en una llamada: comprueba que la sociedad existe y opera, que la razón social que te han dado coincide (name), que quien firma es administrador vigente o socio único (person) y, si se pide, el NIF-IVA en VIES (vat). Devuelve alertas y una recomendación pass / review / fail, además de forma jurídica, LEI, matriz y socio único. Úsala para decidir; para solo consultar datos, get_company. Plan Pro; gasta 2 consultas. KYB check for a Spanish company.",
+        "Verificación para dar de alta a un cliente o proveedor (KYB) en una llamada: comprueba que la sociedad existe y opera, que la razón social que te han dado coincide (name), que quien firma es administrador vigente o socio único (person) y, si se pide, el NIF-IVA en VIES (vat). Da fail si la Agencia Tributaria ha revocado su NIF (alerta TAX_ID_REVOKED). Devuelve alertas y una recomendación pass / review / fail, además de forma jurídica, LEI, matriz y socio único. Úsala para decidir; para solo consultar datos, get_company. Plan Pro; gasta 2 consultas. KYB check for a Spanish company.",
       inputSchema: {
         cif: cifSchema,
         name: z.string().optional().describe('Razón social que ha declarado el cliente, para comprobar que coincide'),
@@ -236,7 +236,7 @@ export function crearServidor(): McpServer {
     {
       title: 'Validar NIF de clientes para facturar',
       description:
-        "Valida una LISTA de clientes (hasta 100) antes de emitirles facturas (Verifactu, factura electrónica): por cada NIF, si el formato es válido, si la sociedad consta, su razón social y domicilio oficiales, su estado y, si das el nombre que tienes guardado, si coincide. Devuelve invoice_hint ok / revisar / no_facturar con los motivos (extinguida, absorbida, en concurso, nombre distinto, NIF de ejemplo...). Úsala para revisar la cartera de clientes de un programa de facturación o ERP; para dar de alta a un solo cliente con más detalle, verify_company. No sustituye al censo de la AEAT. Plan Pro, Business o saldo; gasta 1 consulta por sociedad encontrada (lo que no consta no se cobra). Bulk VAT/tax ID check of invoice recipients.",
+        "Valida una LISTA de clientes (hasta 100) antes de emitirles facturas (Verifactu, factura electrónica): por cada NIF, si el formato es válido, si la sociedad consta, su razón social y domicilio oficiales, su estado y, si das el nombre que tienes guardado, si coincide. Devuelve invoice_hint ok / revisar / no_facturar con los motivos (extinguida, absorbida, en concurso, NIF revocado por la AEAT, nombre distinto, NIF de ejemplo...). Úsala para revisar la cartera de clientes de un programa de facturación o ERP; para dar de alta a un solo cliente con más detalle, verify_company. No sustituye al censo de la AEAT. Plan Pro, Business o saldo; gasta 1 consulta por sociedad encontrada (lo que no consta no se cobra). Bulk VAT/tax ID check of invoice recipients.",
       inputSchema: {
         items: z
           .array(

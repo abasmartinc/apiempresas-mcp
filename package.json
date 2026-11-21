@@ -1,7 +1,7 @@
 {
   "name": "apiempresas-mcp",
-  "version": "1.4.0",
-  "description": "Servidor MCP oficial de APIEmpresas.es: datos de empresas españolas (CIF, BORME, administradores, KYB, listas de sanciones, licitaciones abiertas, riesgo) para Claude, Cursor y otros asistentes de IA",
+  "version": "1.4.2",
+  "description": "Official MCP server for SpainCompanyAPI (APIEmpresas.es): Spanish company data for Claude, Cursor and other AI assistants. Tax ID (CIF/NIF) lookup, KYB verification, invoice recipient checks, directors, BORME filings, sanctions screening, public tenders and risk.",
   "mcpName": "io.github.abasmartinc/apiempresas",
   "type": "module",
   "bin": {
@@ -23,18 +23,40 @@
   },
   "keywords": [
     "mcp",
+    "mcp-server",
     "model-context-protocol",
-    "apiempresas",
-    "empresas",
+    "claude",
+    "cursor",
+    "ai-agents",
+    "spain",
+    "spanish companies",
+    "company data",
+    "kyb",
+    "know your business",
+    "company verification",
+    "tax id validation",
     "cif",
     "nif",
+    "vies",
+    "e-invoicing",
     "borme",
-    "registro mercantil",
-    "kyb",
-    "spain",
-    "spanish companies"
+    "commercial registry",
+    "sanctions screening",
+    "public tenders",
+    "apiempresas",
+    "spaincompanyapi",
+    "empresas",
+    "registro mercantil"
   ],
-  "homepage": "https://apiempresas.es",
+  "homepage": "https://spaincompanyapi.com",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/abasmartinc/apiempresas-mcp.git"
+  },
+  "bugs": {
+    "url": "https://github.com/abasmartinc/apiempresas-mcp/issues",
+    "email": "soporte@apiempresas.es"
+  },
   "author": "APIEmpresas",
   "license": "MIT",
   "dependencies": {
